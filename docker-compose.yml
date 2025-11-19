@@ -15,6 +15,7 @@ services:
   dbt:
     image: ghcr.io/dbt-labs/dbt-postgres:1.7.latest
     container_name: dbt_runner
+    command: ["python", "-c", "import time; time.sleep(999999)"]
     working_dir: /usr/app
     volumes:
       - ./dbt:/usr/app
