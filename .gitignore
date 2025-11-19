@@ -1,0 +1,37 @@
+# ---------------------------
+# DBT Project Ignore Rules
+# ---------------------------
+
+# dbt build artifacts
+target/
+dbt_packages/
+logs/
+.idea/
+*.pyc
+
+# OS files
+.DS_Store
+
+# Python venvs
+venv/
+.env/
+
+# Docker
+*.pid
+*.log
+
+# Local environment files
+.envrc
+.env.local
+.env.development
+.env.production
+
+# Ignore compiled SQL (safe)
+analysis/
+
+# Private keys and credentials
+*.key
+*.pem
+
+
+
