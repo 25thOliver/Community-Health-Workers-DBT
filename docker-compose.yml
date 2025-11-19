@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: dbt_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: dbt_user
+      POSTGRES_PASSWORD: dbt_password
+      POSTGRES_DB: analytics
+    ports: 
+      - "5436:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  dbt:
+    image: ghcr.io/dbt-labs/dbt-postgres:1.7.latest
+    container_name: dbt_runner
+    working_dir: /usr/app
+    volumes:
+      - ./dbt:/usr/app
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
