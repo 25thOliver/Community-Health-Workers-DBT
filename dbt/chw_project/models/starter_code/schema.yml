@@ -41,5 +41,8 @@ models:
         description: "Count of family_planning activities."
 
     tests:
-      - unique:
-          column_names: ['chv_id', 'report_month']
+      - unique_combination_of_columns:
+          combination_of_columns:
+            - chv_id
+            - report_month
+
