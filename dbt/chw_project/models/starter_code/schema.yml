@@ -1,48 +1,45 @@
+version: 2
+
 models:
   - name: chw_activity_monthly
-    description:
-      Monthly aggregated view of CWH (CHV) activities.
-      Grain: one row per chv_id and report_month (first day of the month).
-      Business rule: activities on/after day 26 are assigned to the next month.
+    description: |
+      Monthly aggregated view of CHW (CHV) activities.
+
+      Grain:
+        - One row per chv_id and report_month (first day of the month).
+
+      Business rule:
+        - Activities on or after day 26 are assigned to the next month.
+
     columns:
       - name: chv_id
         description: "Unique identifier for the CHW (CHV)."
         tests:
           - not_null
+
       - name: report_month
-        description: "First day of reporting month (DATE). Activities on/after 26th are assigned to the next month."
+        description: "First day of reporting month. Activities on/after 26th go to next month."
         tests:
           - not_null
+
       - name: total_activities
         description: "Total number of activities performed by this CHW in this month."
+
       - name: unique_households_visited
-        description: "Number of distinct households visited by CWH in this month."
+        description: "Distinct households visited by CHW this month."
+
       - name: unique_patients_served
-        description: "Number of distinct patients served by CHW in this month(NULLs ignored)."
+        description: "Distinct patients served (NULLs ignored)."
+
       - name: pregnancy_visits
-        description: "Count of activities where activity_type = 'pregnancy_visit'."
+        description: "Count of pregnancy_visit activities."
+
       - name: child_assessments
-        description: "Count of activities where activity_type = 'child_assessment'."
+        description: "Count of child_assessment activities."
+
       - name: family_planning_visits
-        description: "Count of activities where activity_type = 'family_planning'."
+        description: "Count of family_planning activities."
 
     tests:
       - unique:
-        column_names: chv_id
-      - unique:
-        column_name: report_month
-
-    
-# Optional relationship tests (uncomment if marts.dim_chv exists as a model or source)
-# If dim_chv is a dbt model:
-# sources:
-#   - name: marts
-#     tables:
-#       - name: dim_chv
-#
-# Then add a relationship test on chv_id below:
-#    - relationships:
-#        to: ref('dim_chv')
-#        field: chv_id
-
-# If dim tables are external sources, create `sources` definitions and then reference them in the relationship.
+          column_names: ['chv_id', 'report_month']
