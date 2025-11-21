@@ -12,10 +12,14 @@ with raw as (
         activity_id,
         chv_id,
         activity_date,
+        activity_timestamp,
         activity_type,
         household_id,
         patient_id,
-        is_deleted
+        location_id,
+        is_deleted,
+        created_at,
+        updated_at
     from {{ source('marts', 'fct_chv_activity') }}
 
     where activity_date is not null
@@ -35,9 +39,11 @@ assigned as (
         activity_id,
         chv_id,
         activity_date,
+        activity_timestamp,
         activity_type,
         household_id,
         patient_id,
+        location_id,
         {{ month_assignment('activity_date') }} as report_month
     from raw
 ),
