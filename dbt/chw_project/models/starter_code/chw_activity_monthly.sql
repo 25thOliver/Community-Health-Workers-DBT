@@ -48,7 +48,7 @@ aggregated as (
         count(distinct patient_id)::int as unique_patients_served,
         sum(case when activity_type = 'pregnancy_visit' then 1 else 0 end)::int as pregnancy_visits,
         sum(case when activity_type = 'child_assessment' then 1 else 0 end)::int as child_assessments,
-        sum(case when activity_type = 'family_planning' then 1 else 0 end):: family_planning_visits
+        sum(case when activity_type = 'family_planning' then 1 else 0 end)::int as family_planning_visits
     from assigned
     group by chv_id, report_month
     
