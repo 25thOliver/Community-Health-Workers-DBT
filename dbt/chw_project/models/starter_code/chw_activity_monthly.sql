@@ -17,7 +17,7 @@ with raw as (
         household_id,
         patient_id,
         is_deleted
-    from {{ source('marts', 'fct_chv_activity') }}
+    from {{ source('public', 'fct_chv_activity') }}
 
     where activity_date is not null
         and chv_id is not null
