@@ -20,7 +20,12 @@ with raw as (
 
     where activity_date is not null
         and chv_id is not null
-        and (is_deleted is false or is_deleted is null) -- null treated as not deleted
+        and coalesce(is_deleted, false) = false -- null treated as not deleted
+        {% if is_incremental() %}
+            and {{ month_assignment('activity_date') }} >= (
+                select date_trunc('month', min(report_month)) from {{ this }}
+            )
+        {% endif %}
 
 ),
 
