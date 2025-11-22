@@ -16,7 +16,7 @@ with raw as (
         activity_type,
         household_id,
         patient_id,
-        location_id,
+        location_code,
         is_deleted,
         created_at,
         updated_at
@@ -43,7 +43,7 @@ assigned as (
         activity_type,
         household_id,
         patient_id,
-        location_id,
+        location_code,
         {{ month_assignment('activity_date') }} as report_month
     from raw
 ),
