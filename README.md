@@ -79,3 +79,19 @@ Rows are excluded when:
 - `chv_id` is NULL
 - `activity_date` is NULL
 - `is_deleted` = TRUE
+
+## Output Model
+
+`chw_activity_monthly.sql`
+Produces monthly CHW activity metrics:
+
+- `total_activities`
+- `unique_households_visited`
+- `unique_patients_served`
+- `pregnancy_visits`
+- `child_assessments`
+- `family_planning_visits`
+
+The model is incremental, using:
+`unique_key = ['chv_id', 'report_month']`
+
