@@ -48,3 +48,19 @@ with one row per CHV per reporting month.
 (base) oliver@oliver-HP-EliteBook-x360-1030-G3:~/Documents/chw_dbt$ 
 ```
 
+## Source Data
+
+The model is built from a fact table:
+`publc.fct_chv_activity`
+
+This table stores CHW visit-level activity including:
+- Activity date & timestamp
+- Which CHW performed the activity
+- Type of activity (pregnancy visit, child assessment, etc.)
+- Household visited
+- Patient served
+- Is the record deleted?
+- Location metadata
+
+## Business Logic
+
