@@ -138,3 +138,11 @@ psql -U dbt_user -d analytics
 SELECT *
 FROM public.chw_activity_monthly;
 ```
+
+## Recommended Enhancements
+
+- Build a CHW dimension table (dim_chw)
+- Add freshness tests for the source
+- Create downstream marts for dashboards
+- Add documentation site via dbt docs
+- Add additional activity classifications
