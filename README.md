@@ -95,3 +95,11 @@ Produces monthly CHW activity metrics:
 The model is incremental, using:
 `unique_key = ['chv_id', 'report_month']`
 
+## Testing
+
+Tests include:
+
+- `not_null` on key fields
+- `dbt_utils.unique_combination_of_columns` on (`chv_id`, `report_month`)
+
+All tests pass successfully.
