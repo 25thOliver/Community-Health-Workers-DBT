@@ -116,3 +116,25 @@ A rich sample dataset from the project specification was loaded into `public.fct
 
 The model output matches expected results of all scenarios.
 
+## Running the Project
+
+**Initialize Containers**
+`docker compose up -d`
+
+**Run dbt**
+```bash
+docker exec -it dbt_runner bash
+cd chw_project/
+dbt run
+```
+
+**Test**
+`dbt test --select chw_activity_monthly`
+
+**Inspect Output**
+```bash
+docker exec -it dbt_postgres bash
+psql -U dbt_user -d analytics
+SELECT *
+FROM public.chw_activity_monthly;
+```
