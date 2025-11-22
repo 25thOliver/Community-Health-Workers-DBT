@@ -103,3 +103,16 @@ Tests include:
 - `dbt_utils.unique_combination_of_columns` on (`chv_id`, `report_month`)
 
 All tests pass successfully.
+
+## Sample Data
+
+A rich sample dataset from the project specification was loaded into `public.fct_chv_activity` to validate:
+
+- Month-edge behavior (26th rule)
+- Duplicate household/patient logic
+- Deleted/invalid record filtering
+- Multiple CHWs
+- Year boundary transitions (Dec → Jan)
+
+The model output matches expected results of all scenarios.
+
