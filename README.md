@@ -64,3 +64,18 @@ This table stores CHW visit-level activity including:
 
 ## Business Logic
 
+### Reporting Month Rule
+
+Activities are assigned to a reporting month using the rule:
+     
+    ACtivities on or after the 26th of a month belong to the next month.
+
+This logic is implemented in the macro: `dbt/chw_project/macros/month_assignment.sql` 
+
+### Record Filtering
+
+Rows are excluded when:
+
+- `chv_id` is NULL
+- `activity_date` is NULL
+- `is_deleted` = TRUE
