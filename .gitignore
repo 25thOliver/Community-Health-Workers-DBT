@@ -22,9 +22,11 @@ venv/
 
 # Local environment files
 .envrc
+.env
 .env.local
 .env.development
 .env.production
+
 
 # Ignore compiled SQL (safe)
 analysis/
