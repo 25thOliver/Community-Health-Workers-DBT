@@ -1,0 +1,36 @@
+version: 2
+
+models:
+  - name: stg_chw__activities
+    description: "Standardized, sanitized staging view of Community Health Worker visit activities."
+    columns:
+      - name: activity_id
+        description: "Primary key of the activity."
+        tests:
+          - unique
+          - not_null
+
+      - name: chv_id
+        description: "Identifier of the CHW performing the activity."
+
+      - name: activity_date
+        description: "Date the activity took place."
+
+      - name: report_month
+        description: "First day of the assigned reporting month based on the 26th-day cutoff rule."
+
+      - name: activity_type
+        description: "Categorical activity type classification."
+        tests:
+          - accepted_values:
+              values:
+                - pregnancy_visit
+                - child_assessment
+                - family_planning
+              config:
+                severity: warn
+
+      - name: is_deleted
+        description: "Soft deletion indicator flag, defaulted to false."
+        tests:
+          - not_null
