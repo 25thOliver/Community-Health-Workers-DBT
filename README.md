@@ -12,8 +12,20 @@ The resulting analytical mart powers public health dashboards, performance revie
 
 ## 2. Verified Data Architecture & DAG Flow
 
-[ Raw Source Table ] public.fct_chv_activity (Source: chw_source) │ ├───► [ Staging View ] stg_chw__activities │ - Standardizes entity IDs, dates, and types │ - Normalizes activity_type classifications │ - Assigns reporting month via 26th-day cutoff macro │ │ │ └───► [ Analytical Mart (Incremental) ] chw_activity_monthly │ - Grain: One row per CHW per reporting month │ - Primary Key: activity_monthly_id (surrogate key) │ - Incremental: delete+insert with 2-month lookback │ └───► [ Audit / Quarantine View ] stg_chw__rejected_activities - Captures invalid records (missing CHW ID, null date, deleted) - Categorizes rejection reasons for field data quality triage
+```mermaid
+flowchart TD
+    A["<b>[ Raw Source Table ]</b><br/>public.fct_chv_activity<br/>(Source: chw_source)"]
 
+    B["<b>[ Staging View ]</b><br/>stg_chw__activities<br/><br/>- Standardizes entity IDs, dates, and types<br/>- Normalizes activity_type classifications<br/>- Assigns reporting month via 26th-day cutoff macro"]
+
+    C["<b>[ Analytical Mart (Incremental) ]</b><br/>chw_activity_monthly<br/><br/>- Grain: One row per CHW per reporting month<br/>- Primary Key: activity_monthly_id (surrogate key)<br/>- Incremental: delete+insert with 2-month lookback"]
+
+    D["<b>[ Audit / Quarantine View ]</b><br/>stg_chw__rejected_activities<br/><br/>- Captures invalid records (missing CHW ID, null date, deleted)<br/>- Categorizes rejection reasons for field data quality triage"]
+
+    A --> B
+    B --> C
+    A --> D
+```
 
 ---
 
