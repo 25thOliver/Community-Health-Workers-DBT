@@ -1,69 +1,79 @@
 {{ config(
     materialized = 'incremental',
     incremental_strategy = 'delete+insert',
-    unique_key = ['chv_id', 'report_month']
-)}}
+    unique_key = 'activity_monthly_id'
+) }}
 
--- Monthly rollup per CHW (one rwo per chv_id + report_month)
-with raw as (
+/*
+    chw_activity_monthly
     
-    -- Source filtering: exclude invalid or deleted records
+    Grain: One row per CHW (chv_id) and reporting month (report_month).
+    Business Rule: 26th-day reporting cycle cutoff.
+    Incremental Strategy: delete+insert with a 2-month bounded lookback window
+    to handle late-arriving offline syncs and supervisor edits.
+*/
+
+with activities as (
+
     select
         activity_id,
         chv_id,
-        activity_date,
-        activity_timestamp,
-        activity_type,
         household_id,
         patient_id,
         location_code,
+        activity_date,
+        activity_timestamp,
+        report_month,
+        activity_type,
         is_deleted,
-        created_at,
         updated_at
-    from {{ source('chw_source', 'fct_chv_activity') }}
+    from {{ ref('stg_chw__activities') }}
 
-    where activity_date is not null
-        and chv_id is not null
-        and coalesce(is_deleted, false) = false -- null treated as not deleted
-        {% if is_incremental() %}
-            and {{ month_assignment('activity_date') }} >= (
-                select date_trunc('month', min(report_month)) from {{ this }}
-            )
-        {% endif %}
+    where chv_id is not null
+      and activity_date is not null
+      and is_deleted = false
+
+      {% if is_incremental() %}
+          -- Bounded lookback window: recompute current month + previous 2 months
+          and report_month >= (
+              select coalesce(
+                  (max(report_month) - interval '2 month')::date,
+                  '1970-01-01'::date
+              )
+              from {{ this }}
+          )
+      {% endif %}
 
 ),
 
-assigned as (
-    -- assign each activity to a report_month according to the 26th-day
+monthly_aggregates as (
+
     select
-        activity_id,
+        -- Surrogate Primary Key
+        {{ dbt_utils.generate_surrogate_key(['chv_id', 'report_month']) }} as activity_monthly_id,
+
+        -- Natural Keys / Dimensions
         chv_id,
-        activity_date,
-        activity_timestamp,
-        activity_type,
-        household_id,
-        patient_id,
-        location_code,
-        {{ month_assignment('activity_date') }} as report_month
-    from raw
-),
+        report_month,
 
-aggregated as (
-
-    -- aggregate to the target grain: one row per chv_id + report_month
-    select
-        chv_id::varchar as chv_id,
-        report_month::date as report_month,
+        -- Aggregated Metrics
         count(*)::int as total_activities,
         count(distinct household_id)::int as unique_households_visited,
         count(distinct patient_id)::int as unique_patients_served,
+
+        -- Activity Type Breakdowns
         sum(case when activity_type = 'pregnancy_visit' then 1 else 0 end)::int as pregnancy_visits,
         sum(case when activity_type = 'child_assessment' then 1 else 0 end)::int as child_assessments,
-        sum(case when activity_type = 'family_planning' then 1 else 0 end)::int as family_planning_visits
-    from assigned
-    group by chv_id, report_month
-    
+        sum(case when activity_type = 'family_planning' then 1 else 0 end)::int as family_planning_visits,
+
+        -- Metadata
+        current_timestamp as dbt_updated_at
+
+    from activities
+    group by 
+        chv_id, 
+        report_month
+
 )
 
-select * from aggregated
-
+select * from monthly_aggregates
