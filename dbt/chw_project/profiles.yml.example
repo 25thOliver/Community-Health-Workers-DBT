@@ -1,0 +1,40 @@
+# profiles.yml.example
+# Copy this file to ~/.dbt/profiles.yml or set DBT_PROFILES_DIR to this folder.
+# All sensitive credentials and environment variables are populated dynamically.
+
+chw_project:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('POSTGRES_HOST', 'localhost') }}"
+      user: "{{ env_var('POSTGRES_USER', 'dbt_user') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD', 'dbt_password') }}"
+      port: "{{ env_var('POSTGRES_PORT', '5432') | int }}"
+      dbname: "{{ env_var('POSTGRES_DB', 'analytics') }}"
+      schema: "{{ env_var('POSTGRES_SCHEMA', 'public') }}"
+      threads: 4
+      keepalives_idle: 0
+
+    docker:
+      type: postgres
+      host: "{{ env_var('POSTGRES_HOST', 'postgres') }}"
+      user: "{{ env_var('POSTGRES_USER', 'dbt_user') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD', 'dbt_password') }}"
+      port: "{{ env_var('POSTGRES_PORT', '5432') | int }}"
+      dbname: "{{ env_var('POSTGRES_DB', 'analytics') }}"
+      schema: "{{ env_var('POSTGRES_SCHEMA', 'public') }}"
+      threads: 4
+      keepalives_idle: 0
+
+    ci:
+      type: postgres
+      host: "{{ env_var('POSTGRES_HOST', 'localhost') }}"
+      user: "{{ env_var('POSTGRES_USER', 'dbt_user') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD', 'dbt_password') }}"
+      port: "{{ env_var('POSTGRES_PORT', '5432') | int }}"
+      dbname: "{{ env_var('POSTGRES_DB', 'analytics') }}"
+      schema: "{{ env_var('POSTGRES_SCHEMA', 'dbt_ci') }}"
+      threads: 2
+      keepalives_idle: 0
+      
