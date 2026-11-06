@@ -28,5 +28,7 @@ clean-targets:         # directories to be removed by `dbt clean`
 
 models:
   chw_project:
-    starter_code:
+    staging:
       +materialized: view
+    marts:
+      +materialized: table
