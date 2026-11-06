@@ -1,7 +1,0 @@
-version: 2
-
-sources:
-  - name: marts
-    schema: public
-    tables:
-      - name: fct_chv_activity

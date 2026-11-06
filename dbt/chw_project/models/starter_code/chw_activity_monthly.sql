@@ -20,7 +20,7 @@ with raw as (
         is_deleted,
         created_at,
         updated_at
-    from {{ source('marts', 'fct_chv_activity') }}
+    from {{ source('chw_source', 'fct_chv_activity') }}
 
     where activity_date is not null
         and chv_id is not null

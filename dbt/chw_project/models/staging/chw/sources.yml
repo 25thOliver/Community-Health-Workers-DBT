@@ -1,0 +1,36 @@
+version: 2
+
+sources:
+  - name: chw_source
+    description: "Raw Community Health Worker (CHW/CHV) activity and visit logs."
+    schema: public
+    tables:
+      - name: fct_chv_activity
+        description: "Event-level log of community health visits and patient service interactions."
+        loaded_at_field: updated_at
+        freshness:
+          warn_after: {count: 24, period: hour}
+          error_after: {count: 48, period: hour}
+        columns:
+          - name: activity_id
+            description: "Primary key for the raw activity record."
+          - name: chv_id
+            description: "Identifier of the Community Health Worker / Volunteer."
+          - name: activity_date
+            description: "Calendar date on which the activity was conducted."
+          - name: activity_timestamp
+            description: "Precise timestamp when the activity was logged."
+          - name: activity_type
+            description: "Classification of visit (pregnancy_visit, child_assessment, family_planning)."
+          - name: household_id
+            description: "Identifier of the household visited."
+          - name: patient_id
+            description: "Identifier of the individual patient served (can be null for household-only visits)."
+          - name: location_code
+            description: "Geographic or facility location code."
+          - name: is_deleted
+            description: "Soft deletion indicator flag (true if deleted/invalidated)."
+          - name: created_at
+            description: "Record creation timestamp in the source database."
+          - name: updated_at
+            description: "Record last modified timestamp."
