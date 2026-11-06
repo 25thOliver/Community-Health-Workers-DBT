@@ -3,47 +3,70 @@ version: 2
 models:
   - name: chw_activity_monthly
     description: |
-      Monthly aggregated view of CHW (CHV) activities.
+      Monthly aggregated view of Community Health Worker (CHW/CHV) activities.
 
       Grain:
         - One row per chv_id and report_month (first day of the month).
+        - Primary key: activity_monthly_id (surrogate key generated from chv_id and report_month).
 
-      Business rule:
-        - Activities on or after day 26 are assigned to the next month.
+      Business Rules & Implementation:
+        - 26th-day reporting cycle: Activities on or after day 26 belong to the next calendar month.
+        - Incremental strategy: delete+insert with a bounded 2-month lookback window to absorb late-arriving mobile syncs and supervisor edits.
 
     columns:
+      - name: activity_monthly_id
+        description: "Surrogate primary key generated from MD5(chv_id || report_month)."
+        tests:
+          - unique
+          - not_null
+
       - name: chv_id
-        description: "Unique identifier for the CHW (CHV)."
+        description: "Identifier of the Community Health Worker / Volunteer."
         tests:
           - not_null
 
       - name: report_month
-        description: "First day of reporting month. Activities on/after 26th go to next month."
+        description: "First day of the assigned reporting month (YYYY-MM-01)."
         tests:
           - not_null
 
       - name: total_activities
-        description: "Total number of activities performed by this CHW in this month."
+        description: "Total number of non-deleted activities performed by this CHW in the reporting month."
+        tests:
+          - not_null
 
       - name: unique_households_visited
-        description: "Distinct households visited by CHW this month."
+        description: "Distinct count of households visited by the CHW in this reporting month."
+        tests:
+          - not_null
 
       - name: unique_patients_served
-        description: "Distinct patients served (NULLs ignored)."
+        description: "Distinct count of patients served (null patient_ids are excluded)."
+        tests:
+          - not_null
 
       - name: pregnancy_visits
-        description: "Count of pregnancy_visit activities."
+        description: "Count of pregnancy-related visits conducted."
+        tests:
+          - not_null
 
       - name: child_assessments
-        description: "Count of child_assessment activities."
+        description: "Count of child health assessments conducted."
+        tests:
+          - not_null
 
       - name: family_planning_visits
-        description: "Count of family_planning activities."
+        description: "Count of family planning consultations conducted."
+        tests:
+          - not_null
+
+      - name: dbt_updated_at
+        description: "Timestamp indicating when this aggregate row was created or last updated by dbt."
+        tests:
+          - not_null
 
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
             - chv_id
             - report_month
-
-
