@@ -1,0 +1,83 @@
+name: dbt CI Pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    name: Lint, Compile & Test dbt Project
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: dbt_user
+          POSTGRES_PASSWORD: dbt_password
+          POSTGRES_DB: analytics
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install dbt-postgres==1.7.19 sqlfluff==3.0.7
+
+      - name: Copy Profile Template
+        run: |
+          cp dbt/chw_project/profiles.yml.example dbt/chw_project/profiles.yml
+
+      - name: Run SQLFluff Lint
+        run: |
+          sqlfluff lint dbt/chw_project/models
+
+      - name: Install dbt packages
+        working-directory: ./dbt/chw_project
+        run: |
+          dbt deps
+
+      - name: Compile dbt project
+        working-directory: ./dbt/chw_project
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: dbt_user
+          POSTGRES_PASSWORD: dbt_password
+          POSTGRES_DB: analytics
+          POSTGRES_SCHEMA: public
+          DBT_PROFILES_DIR: .
+        run: |
+          dbt compile --target dev
+
+      - name: Run singular and boundary tests
+        working-directory: ./dbt/chw_project
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: dbt_user
+          POSTGRES_PASSWORD: dbt_password
+          POSTGRES_DB: analytics
+          POSTGRES_SCHEMA: public
+          DBT_PROFILES_DIR: .
+        run: |
+          dbt test --select test_type:singular --target dev
