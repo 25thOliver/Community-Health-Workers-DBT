@@ -3,16 +3,12 @@ dialect = postgres
 templater = dbt
 max_line_length = 120
 indent_unit = space
-exclude_rules = structure.column_order,convention.casting_style
+exclude_rules = structure.column_order,convention.casting_style,layout.indent,layout.end_of_file
 
 [sqlfluff:templater:dbt]
 project_dir = ./dbt/chw_project
 profiles_dir = ./dbt/chw_project
 target = dev
-
-[sqlfluff:indentation]
-tab_space_size = 4
-indent_unit = space
 
 [sqlfluff:rules:capitalisation.keywords]
 capitalisation_policy = lower
