@@ -36,9 +36,10 @@ flagged as (
         end as rejection_reason
 
     from source_data
-    where chv_id is null
-       or activity_date is null
-       or is_deleted = true
+    where
+        chv_id is null
+        or activity_date is null
+        or is_deleted = true
 
 )
 

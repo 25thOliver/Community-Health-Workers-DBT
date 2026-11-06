@@ -23,7 +23,7 @@ standardized as (
         -- Event Dates & Timestamps
         activity_date::date as activity_date,
         activity_timestamp::timestamp as activity_timestamp,
-        
+
         -- Calculated Reporting Month (26th-day cutoff)
         {{ month_assignment('activity_date') }} as report_month,
 

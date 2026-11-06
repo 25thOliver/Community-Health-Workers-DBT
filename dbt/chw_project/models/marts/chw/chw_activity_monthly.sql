@@ -6,7 +6,7 @@
 
 /*
     chw_activity_monthly
-    
+
     Grain: One row per CHW (chv_id) and reporting month (report_month).
     Business Rule: 26th-day reporting cycle cutoff.
     Incremental Strategy: delete+insert with a 2-month bounded lookback window
@@ -28,21 +28,22 @@ with activities as (
         is_deleted,
         updated_at
     from {{ ref('stg_chw__activities') }}
+    where
+        chv_id is not null
+        and activity_date is not null
+        and is_deleted = false
 
-    where chv_id is not null
-      and activity_date is not null
-      and is_deleted = false
-
-      {% if is_incremental() %}
-          -- Bounded lookback window: recompute current month + previous 2 months
-          and report_month >= (
-              select coalesce(
-                  (max(report_month) - interval '2 month')::date,
-                  '1970-01-01'::date
-              )
-              from {{ this }}
-          )
-      {% endif %}
+        {% if is_incremental() %}
+            -- Bounded lookback window: recompute current month + previous 2 months
+            and report_month >= (
+                select
+                    coalesce(
+                        (max(report_month) - interval '2 month')::date,
+                        '1970-01-01'::date
+                    )
+                from {{ this }}
+            )
+        {% endif %}
 
 ),
 
@@ -70,8 +71,8 @@ monthly_aggregates as (
         current_timestamp as dbt_updated_at
 
     from activities
-    group by 
-        chv_id, 
+    group by
+        chv_id,
         report_month
 
 )
