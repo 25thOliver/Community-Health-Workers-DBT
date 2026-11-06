@@ -83,7 +83,7 @@ docker exec -it dbt_runner dbt compile --target docker
 
 # Execute full pipeline build
 docker exec -it dbt_runner dbt build --target docker
-
+```
 --- 
 
 ### 5. Validation
