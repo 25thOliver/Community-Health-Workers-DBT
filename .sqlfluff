@@ -1,8 +1,14 @@
 [sqlfluff]
 dialect = postgres
-templater = jinja
-max_line_length = 100
+templater = dbt
+max_line_length = 120
 indent_unit = space
+exclude_rules = structure.column_order
+
+[sqlfluff:templater:dbt]
+project_dir = ./dbt/chw_project
+profiles_dir = ./dbt/chw_project
+target = dev
 
 [sqlfluff:indentation]
 tab_space_size = 4

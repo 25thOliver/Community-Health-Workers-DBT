@@ -1,2 +1,3 @@
 dbt-postgres==1.7.19
 sqlfluff==3.0.7
+sqlfluff-templater-dbt==3.0.7

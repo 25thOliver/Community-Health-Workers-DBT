@@ -47,10 +47,6 @@ jobs:
         run: |
           cp dbt/chw_project/profiles.yml.example dbt/chw_project/profiles.yml
 
-      - name: Run SQLFluff Lint
-        run: |
-          sqlfluff lint dbt/chw_project/models
-
       - name: Install dbt packages
         working-directory: ./dbt/chw_project
         run: |
@@ -68,6 +64,18 @@ jobs:
           DBT_PROFILES_DIR: .
         run: |
           dbt compile --target dev
+
+      - name: Run SQLFluff Lint
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: dbt_user
+          POSTGRES_PASSWORD: dbt_password
+          POSTGRES_DB: analytics
+          POSTGRES_SCHEMA: public
+          DBT_PROFILES_DIR: ./dbt/chw_project
+        run: |
+          sqlfluff lint dbt/chw_project/models
 
       - name: Run singular and boundary tests
         working-directory: ./dbt/chw_project
