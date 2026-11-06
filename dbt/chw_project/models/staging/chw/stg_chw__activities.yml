@@ -34,3 +34,20 @@ models:
         description: "Soft deletion indicator flag, defaulted to false."
         tests:
           - not_null
+
+  - name: stg_chw__rejected_activities
+    description: "Audit view capturing CHW activity records that fail core validity filters (missing CHW ID, missing date, or marked deleted)."
+    columns:
+      - name: activity_id
+        description: "Primary key of the rejected activity record."
+
+      - name: rejection_reason
+        description: "Categorical reason why this record was excluded from reporting marts."
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - missing_chv_id
+                - missing_activity_date
+                - soft_deleted
+                - unknown
