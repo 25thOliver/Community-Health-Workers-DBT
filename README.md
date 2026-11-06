@@ -1,152 +1,93 @@
-# CHW Monthly Activity Aggregation(dbt Project)
+# Community Health Worker (CHW) Monthly Activity Mart (dbt)
 
-## Overview
+[![dbt CI Pipeline](https://github.com/25thOliver/Community-Health-Workers-DBT/actions/workflows/ci.yml/badge.svg)](https://github.com/25thOliver/Community-Health-Workers-DBT/actions/workflows/ci.yml)
 
-This dbt project produces a monthly summary of Community Health WOrker(CHW) activity, following the business rules provided in the project specification. The resulting model powers analytical dashboards used to evaluate CHW productivity and performance over time.
+## 1. Overview
 
-The core output of the project is an aggregated table:
-`public.chw_activity_monthly`
-with one row per CHV per reporting month.
+This production dbt project transforms raw Community Health Worker (CHW/CHV) visit-level event data into an analytics-ready monthly productivity summary table: `public.chw_activity_monthly`.
+
+The resulting analytical mart powers public health dashboards, performance reviews, and resource allocation across community health programs.
+
+---
+
+## 2. Verified Data Architecture & DAG Flow
+
+[ Raw Source Table ] public.fct_chv_activity (Source: chw_source) │ ├───► [ Staging View ] stg_chw__activities │ - Standardizes entity IDs, dates, and types │ - Normalizes activity_type classifications │ - Assigns reporting month via 26th-day cutoff macro │ │ │ └───► [ Analytical Mart (Incremental) ] chw_activity_monthly │ - Grain: One row per CHW per reporting month │ - Primary Key: activity_monthly_id (surrogate key) │ - Incremental: delete+insert with 2-month lookback │ └───► [ Audit / Quarantine View ] stg_chw__rejected_activities - Captures invalid records (missing CHW ID, null date, deleted) - Categorizes rejection reasons for field data quality triage
 
 
-## Project Structure
+---
 
-```
-(base) oliver@oliver-HP-EliteBook-x360-1030-G3:~/Documents/chw_dbt$ tree
-.
-├── dbt
-│   ├── chw_project
-│   │   ├── analyses
-│   │   ├── dbt_packages  [error opening dir]
-│   │   ├── dbt_project.yml
-│   │   ├── logs  [error opening dir]
-│   │   ├── macros
-│   │   │   └── month_assignment.sql
-│   │   ├── models
-│   │   │   ├── example
-│   │   │   │   ├── my_first_dbt_model.sql
-│   │   │   │   ├── my_second_dbt_model.sql
-│   │   │   │   └── schema.yml
-│   │   │   └── starter_code
-│   │   │       ├── chw_activity_monthly.sql
-│   │   │       ├── schema.yml
-│   │   │       └── sources.yml
-│   │   ├── package-lock.yml
-│   │   ├── packages.yml
-│   │   ├── README.md
-│   │   ├── seeds
-│   │   │   └── fct_chv_activity.csv
-│   │   ├── snapshots
-│   │   ├── target  [error opening dir]
-│   │   └── tests
-│   └── logs
-│       └── dbt.log
-├── docker-compose.yml
-└── README.md
+## 3. Core Business Rules
 
-15 directories, 15 files
-(base) oliver@oliver-HP-EliteBook-x360-1030-G3:~/Documents/chw_dbt$ 
-```
+### A. 26th-Day Reporting Cycle
+Community Health Worker reporting cycles close on the 25th of each calendar month. Any activity conducted on or after the 26th is assigned to the subsequent calendar month:
+- **Jan 1 – Jan 25:** Assigned to `January (YYYY-01-01)`.
+- **Jan 26 – Feb 25:** Assigned to `February (YYYY-02-01)`.
+- **Dec 26 – Dec 31:** Rolls over to `January of next year ((YYYY+1)-01-01)`.
 
-## Source Data
+This logic is implemented defensibly in `macros/month_assignment.sql` and verified by automated singular boundary tests in `tests/assert_month_assignment.sql`.
 
-The model is built from a fact table:
-`publc.fct_chv_activity`
+### B. Record Filtering & Quarantine
+- Valid visit records require non-null `chv_id`, non-null `activity_date`, and `is_deleted = false`.
+- Any records failing these criteria are excluded from analytical metrics and surfaced in `stg_chw__rejected_activities` for operational auditing.
 
-This table stores CHW visit-level activity including:
-- Activity date & timestamp
-- Which CHW performed the activity
-- Type of activity (pregnancy visit, child assessment, etc.)
-- Household visited
-- Patient served
-- Is the record deleted?
-- Location metadata
+### C. Incremental Bounded Lookback
+To handle late-arriving offline syncs from rural field workers and retrospective supervisor corrections:
+- The incremental mart (`chw_activity_monthly`) evaluates the current month plus a **2-month bounded lookback window** (`report_month >= max(report_month) - interval '2 month'`).
+- The model applies a `delete+insert` strategy using the unique surrogate key `activity_monthly_id = MD5(chv_id || report_month)`, ensuring idempotent re-execution without duplicate rows.
 
-## Business Logic
+---
 
-### Reporting Month Rule
+## 4. Analytical Mart Schema (`public.chw_activity_monthly`)
 
-Activities are assigned to a reporting month using the rule:
-     
-    ACtivities on or after the 26th of a month belong to the next month.
+| Column Name | Data Type | Description | Tests |
+| :--- | :--- | :--- | :--- |
+| `activity_monthly_id` | VARCHAR | Surrogate primary key: `MD5(chv_id \|\| report_month)` | `unique`, `not_null` |
+| `chv_id` | VARCHAR | Identifier of the Community Health Worker | `not_null` |
+| `report_month` | DATE | Start of the assigned reporting month (`YYYY-MM-01`) | `not_null` |
+| `total_activities` | INTEGER | Total valid activities performed by the CHW | `not_null` |
+| `unique_households_visited` | INTEGER | Distinct households visited in the month | `not_null` |
+| `unique_patients_served` | INTEGER | Distinct patients served (`NULL` patient IDs ignored) | `not_null` |
+| `pregnancy_visits` | INTEGER | Count of prenatal and pregnancy visits | `not_null` |
+| `child_assessments` | INTEGER | Count of child health assessments | `not_null` |
+| `family_planning_visits` | INTEGER | Count of family planning consultations | `not_null` |
+| `dbt_updated_at` | TIMESTAMP | Pipeline audit timestamp when the row was updated | `not_null` |
 
-This logic is implemented in the macro: `dbt/chw_project/macros/month_assignment.sql` 
+---
 
-### Record Filtering
+## 5. Quickstart & Local Development
 
-Rows are excluded when:
+### Prerequisites
+- Docker & Docker Compose
+- Git
 
-- `chv_id` is NULL
-- `activity_date` is NULL
-- `is_deleted` = TRUE
-
-## Output Model
-
-`chw_activity_monthly.sql`
-Produces monthly CHW activity metrics:
-
-- `total_activities`
-- `unique_households_visited`
-- `unique_patients_served`
-- `pregnancy_visits`
-- `child_assessments`
-- `family_planning_visits`
-
-The model is incremental, using:
-`unique_key = ['chv_id', 'report_month']`
-
-## Testing
-
-Tests include:
-
-- `not_null` on key fields
-- `dbt_utils.unique_combination_of_columns` on (`chv_id`, `report_month`)
-
-All tests pass successfully.
-
-## Sample Data
-
-A rich sample dataset from the project specification was loaded into `public.fct_chv_activity` to validate:
-
-- Month-edge behavior (26th rule)
-- Duplicate household/patient logic
-- Deleted/invalid record filtering
-- Multiple CHWs
-- Year boundary transitions (Dec → Jan)
-
-The model output matches expected results of all scenarios.
-
-## Running the Project
-
-**Initialize Containers**
-`docker compose up -d`
-
-**Run dbt**
+### 1. Clone & Configure Environment
 ```bash
-docker exec -it dbt_runner bash
-cd chw_project/
-dbt run
-```
+git clone https://github.com/25thOliver/Community-Health-Workers-DBT.git
+cd Community-Health-Workers-DBT
 
-**Test**
-`dbt test --select chw_activity_monthly`
+# Create active local profile from template
+cp dbt/chw_project/profiles.yml.example dbt/chw_project/profiles.yml
+cp .env.example .env
+2. Start Services
+docker compose up -d
+3. Verify Connection & Dependencies
+docker exec -it dbt_runner dbt deps
+docker exec -it dbt_runner dbt debug --target docker
+4. Build & Test
+# Run singular and boundary tests
+docker exec -it dbt_runner dbt test --select test_type:singular --target docker
 
-**Inspect Output**
+# Compile all models
+docker exec -it dbt_runner dbt compile --target docker
+
+# Execute full pipeline build
+docker exec -it dbt_runner dbt build --target docker
+
+--- 
+
+### 5. Validation
+
+Check `git status` and `git diff`:
 ```bash
-docker exec -it dbt_postgres bash
-psql -U dbt_user -d analytics
-SELECT *
-FROM public.chw_activity_monthly;
-```
-
-## Recommended Enhancements
-
-- Build a CHW dimension table (dim_chw)
-- Add freshness tests for the source
-- Create downstream marts for dashboards
-- Add documentation site via dbt docs
-- Add additional activity classifications
-
-## Project Status
-
-All required components have been built, validated, and tested successfully. Thus, the project now forms a solid foundation for CHW performance analytics.
+git status
