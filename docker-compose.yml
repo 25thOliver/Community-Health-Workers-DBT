@@ -7,8 +7,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-dbt_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dbt_password}
       POSTGRES_DB: ${POSTGRES_DB:-analytics}
-
-    ports: 
+    ports:
       - "5436:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -18,13 +17,19 @@ services:
     container_name: dbt_runner
     entrypoint: ["/bin/bash", "-c"]
     command: ["tail -f /dev/null"]
-    working_dir: /usr/app
+    working_dir: /usr/app/chw_project
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-dbt_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dbt_password}
+      POSTGRES_DB: ${POSTGRES_DB:-analytics}
+      POSTGRES_SCHEMA: public
+      DBT_PROFILES_DIR: /usr/app/chw_project
     volumes:
       - ./dbt:/usr/app
-      - dbt_profiles:/root/.dbt
     depends_on:
       - postgres
 
 volumes:
   postgres_data:
-  dbt_profiles:

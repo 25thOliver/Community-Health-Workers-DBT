@@ -35,5 +35,10 @@ analysis/
 *.key
 *.pem
 
+# dbt local state & telemetry
+.user.yml
+*.user.yml
 
+# Active local profile (use profiles.yml.example for source control)
+profiles.yml
 
